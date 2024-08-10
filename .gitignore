@@ -25,3 +25,4 @@ data.json
 coverage
 
 package-lock.json
+.hotreload

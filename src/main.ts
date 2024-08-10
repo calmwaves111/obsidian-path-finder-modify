@@ -67,6 +67,16 @@ export default class PathFinderPlugin extends Plugin {
 			},
 		});
 
+		//calmwaves
+		this.addCommand({
+			id: "find-random-path",
+			name: "Find Random Path",
+			callback: () => {
+			  this.findRandomPath();
+			},
+		  });
+		  
+
 		this.registerView(
 			VIEW_TYPE_PATHGRAPHVIEW,
 			(leaf) => new PathGraphView(leaf)
@@ -74,7 +84,7 @@ export default class PathFinderPlugin extends Plugin {
 
 		this.registerView(VIEW_TYPE_PATHVIEW, (leaf) => new PathView(leaf));
 		this.registerDomEvent(document, "keydown", (evt) => {
-			let activeView = app.workspace.getActiveViewOfType(PathGraphView);
+			let activeView = this.app.workspace.getActiveViewOfType(PathGraphView);
 			if (!activeView) return;
 			// console.log(evt);
 			const { settings } = this;
@@ -105,6 +115,31 @@ export default class PathFinderPlugin extends Plugin {
 		await this.saveData(this.settings);
 	}
 
+	//calmwaves
+	getRandomFiles() {
+		// todo 加到配置项里，排除一些文件夹
+		let files = this.app.vault.getFiles().filter((file) => file.extension == "md"&&!file.path.includes("待整理")&&!file.path.includes("z-script"));
+		if (files.length < 2) {
+		  new Notice("库中的文件不足以进行随机选择。");
+		  return;
+		}
+		let file1 = files[Math.floor(Math.random() * files.length)];
+		let file2 = files[Math.floor(Math.random() * files.length)];
+		// 确保两个文件是不同的
+		while (file1 === file2) {
+		  file2 = files[Math.floor(Math.random() * files.length)];
+		}
+		return { from: file1.path, to: file2.path };
+	  }
+	  //calmwaves
+	  async findRandomPath() {
+		let { from, to } = this.getRandomFiles();
+		if (!from || !to) return; // 如果没有获取到文件，则退出
+		// 这里你可以使用现有的findPaths方法，或者根据需要修改
+		await this.findPaths("shortest_path", Object.assign({}, this.settings.filter), from, to);
+	  }
+	  
+
 	isKey(evt: KeyboardEvent, hotkey: Hotkey): boolean {
 		if (evt.ctrlKey != hotkey.modifiers.includes("Ctrl")) return false;
 		if (evt.shiftKey != hotkey.modifiers.includes("Shift")) return false;
@@ -134,7 +169,7 @@ export default class PathFinderPlugin extends Plugin {
 	) {
 		from = normalizePath(from);
 		to = normalizePath(to);
-		let { vault } = app;
+		let { vault } = this.app;
 
 		if (vault.getAbstractFileByPath(from) === null) {
 			new Notice(`${from} does not exist.`);
@@ -181,7 +216,7 @@ export default class PathFinderPlugin extends Plugin {
 	 */
 	buildGraphFromLinks(filter: GraphFilter): WeightedGraphWithNodeID {
 		let graph = new WeightedGraphWithNodeID();
-		let { resolvedLinks } = app.metadataCache;
+		let { resolvedLinks } = this.app.metadataCache;
 		for (let fromFilePath in resolvedLinks) {
 			if (isFiltered(filter, fromFilePath)) continue;
 			for (let toFilePath in resolvedLinks[fromFilePath]) {
@@ -206,7 +241,7 @@ export default class PathFinderPlugin extends Plugin {
 		length: number,
 		graph: WeightedGraphWithNodeID
 	) {
-		let { workspace } = app;
+		let { workspace } = this.app;
 		// workspace.detachLeavesOfType(VIEW_TYPE_PATHGRAPHVIEW);
 
 		let pathGraphViewLeaf = workspace.getLeaf(true);
@@ -255,7 +290,7 @@ export default class PathFinderPlugin extends Plugin {
 			new Notice(`${to} does note exist!`);
 			return;
 		}
-		let { workspace } = app;
+		let { workspace } = this.app;
 		// workspace.detachLeavesOfType(VIEW_TYPE_PATHVIEW);
 
 		let pathViewLeaf = workspace.getLeaf(true);

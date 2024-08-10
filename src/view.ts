@@ -75,7 +75,7 @@ export class PathGraphView extends ItemView {
 			let fromFilePath = graph.getName(graph.edges[i].source),
 				toFilePath = graph.getName(graph.edges[i].target);
 			if (!fromFilePath || !toFilePath) continue;
-			let resolvedLinks = app.metadataCache.resolvedLinks;
+			let resolvedLinks = this.app.metadataCache.resolvedLinks;
 			if (resolvedLinks[fromFilePath][toFilePath]) {
 				let tmp = {
 					source: fromFilePath,
@@ -131,7 +131,7 @@ export class PathGraphView extends ItemView {
 				nodeRadius: 10,
 				linkGroups: ["monodirectional", "bidirectional"],
 				nodeTitle: (x: any) => {
-					let file = app.vault.getAbstractFileByPath(x.id);
+					let file = this.app.vault.getAbstractFileByPath(x.id);
 					if (!file) return "undefined";
 					else if (file instanceof TFile) {
 						if (file.extension == "md") return file.basename;
@@ -224,7 +224,7 @@ export class PathView extends ItemView {
 		});
 		if (this.currentPage >= this.paths.length) return;
 		for (let x of this.paths[this.currentPage]) {
-			let file = app.vault.getAbstractFileByPath(x);
+			let file = this.app.vault.getAbstractFileByPath(x);
 			if (file === null) continue;
 			let pathItemContainer = pathContentContainer.createDiv({
 				cls: ["path-finder", "panel-display", "path-item"],

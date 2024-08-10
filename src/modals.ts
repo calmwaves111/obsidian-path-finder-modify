@@ -3,13 +3,13 @@ import { SuggestFile, GenericTextSuggester } from "src/generic_text_suggester";
 import { GraphFilter, GraphFilterMode } from "./settings";
 
 function getFilesWithAliases(): SuggestFile[] {
-	let markdownFiles = app.vault.getMarkdownFiles();
+	let markdownFiles = this.app.vault.getMarkdownFiles();
 	let markdownFilesWithAlias: SuggestFile[] = [];
 	for (let file of markdownFiles) {
 		markdownFilesWithAlias.push(
 			new SuggestFile(file.basename, file.path, true)
 		);
-		let aliases = app.metadataCache.getFileCache(file)?.frontmatter?.alias;
+		let aliases = this.app.metadataCache.getFileCache(file)?.frontmatter?.alias;
 		if (aliases !== undefined) {
 			try {
 				for (let alias of aliases) {
@@ -140,11 +140,11 @@ The filter string will be matched everywhere in the file path(from vault root to
 				.setButtonText("Confirm")
 				.setCta()
 				.onClick(async () => {
-					if (app.vault.getAbstractFileByPath(this.from) === null) {
+					if (this.app.vault.getAbstractFileByPath(this.from) === null) {
 						new Notice(`${this.from} is not a legal path.`);
 						return;
 					}
-					if (app.vault.getAbstractFileByPath(this.to) === null) {
+					if (this.app.vault.getAbstractFileByPath(this.to) === null) {
 						new Notice(`${this.to}  is not a legal path.`);
 						return;
 					}
