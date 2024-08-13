@@ -115,30 +115,79 @@ export default class PathFinderPlugin extends Plugin {
 		await this.saveData(this.settings);
 	}
 
-	//calmwaves
-	getRandomFiles() {
-		// todo 加到配置项里，排除一些文件夹
-		let files = this.app.vault.getFiles().filter((file) => file.extension == "md"&&!file.path.includes("待整理")&&!file.path.includes("z-script"));
-		if (files.length < 2) {
-		  new Notice("库中的文件不足以进行随机选择。");
-		  return;
-		}
-		let file1 = files[Math.floor(Math.random() * files.length)];
-		let file2 = files[Math.floor(Math.random() * files.length)];
-		// 确保两个文件是不同的
-		while (file1 === file2) {
-		  file2 = files[Math.floor(Math.random() * files.length)];
-		}
-		return { from: file1.path, to: file2.path };
-	  }
-	  //calmwaves
-	  async findRandomPath() {
-		let { from, to } = this.getRandomFiles();
-		if (!from || !to) return; // 如果没有获取到文件，则退出
-		// 这里你可以使用现有的findPaths方法，或者根据需要修改
-		await this.findPaths("shortest_path", Object.assign({}, this.settings.filter), from, to);
-	  }
-	  
+	//！没加异步处理的函数
+	// //calmwaves
+	// getRandomFiles() {
+	// 	// todo 加到配置项里，排除一些文件夹
+	// 	//@ts-ignore
+	// 	let files = this.app.vault.getMarkdownFiles().filter((file) => !file.path.includes("待整理")&&!file.path.includes("z-script")&&Object.keys(this.app.metadataCache.getBacklinksForFile(file).data).length+this.app.metadataCache.getFileCache(file)?.links?.length>0);
+	// 	if (files.length < 2) {
+	// 	  new Notice("库中的文件不足以进行随机选择。");
+	// 	  return;
+	// 	}
+	// 	let file1 = files[Math.floor(Math.random() * files.length)];
+	// 	let file2 = files[Math.floor(Math.random() * files.length)];
+	// 	// 确保两个文件是不同的
+	// 	while (file1 === file2) {
+	// 	  file2 = files[Math.floor(Math.random() * files.length)];
+	// 	}
+	// 	return { from: file1.path, to: file2.path };
+	//   }
+	//   //calmwaves
+	//   async findRandomPath() {
+	// 	let { from, to } = this.getRandomFiles();
+	// 	if (!from || !to) return; // 如果没有获取到文件，则退出
+	// 	// 这里你可以使用现有的findPaths方法，或者根据需要修改
+	// 	await this.findPaths("shortest_path", Object.assign({}, this.settings.filter), from, to);
+	//   }
+
+
+//calmwaves
+async getRandomFiles() {
+	// 假设 getMarkdownFiles 和 getBacklinksForFile 是异步的
+	let files = await this.app.vault.getMarkdownFiles();
+	
+	// 使用 Promise.all 来并行处理文件筛选
+	const filteredFiles = await Promise.all(files.map(async file => {
+	  const path = file.path;
+	  const isExcluded = path.includes("待整理") || path.includes("z-script");
+	  if (isExcluded) return undefined;
+  
+	  // 异步获取链接数量
+	  //@ts-ignore
+	  const links = await this.app.metadataCache.getBacklinksForFile(file);
+	  const cache = this.app.metadataCache.getFileCache(file);
+	  const linkCount = Object.keys(links.data).length + (cache?.links?.length || 0);
+	  return linkCount > 0 ? file : undefined;
+	}));
+  
+	// 过滤掉不符合条件的文件
+	files = filteredFiles.filter(file => file);
+  
+	if (files.length < 2) {
+	  new Notice("库中的文件不足以进行随机选择。");
+	  return;
+	}
+  
+	// 优化随机数生成
+	let file1 = files[Math.floor(Math.random() * files.length)];
+	let file2 = file1;
+	while (file1 === file2) {
+	  file2 = files[Math.floor(Math.random() * files.length)];
+	}
+  
+	return { from: file1.path, to: file2.path };
+  }
+  
+  //calmwaves
+  async findRandomPath() {
+	// 使用 await 等待 getRandomFiles 的 Promise 解决
+	let { from, to } = await this.getRandomFiles();
+	if (!from || !to) return; // 如果没有获取到文件，则退出
+  
+	// 这里你可以使用现有的 findPaths 方法，或者根据需要修改
+	await this.findPaths("shortest_path", Object.assign({}, this.settings.filter), from, to);
+  }
 
 	isKey(evt: KeyboardEvent, hotkey: Hotkey): boolean {
 		if (evt.ctrlKey != hotkey.modifiers.includes("Ctrl")) return false;

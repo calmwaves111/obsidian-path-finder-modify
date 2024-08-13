@@ -1,7 +1,7 @@
 {
 	"id": "obsidian-path-finder-modify",
 	"name": "Path Finder modify",
-	"version": "2.0.0",
+	"version": "2.1.0",
 	"minAppVersion": "0.12.0",
 	"description": "A plugin that can find the shortest path between two notes. Not sure who will want to use it...",
 	"author": "jerrywcy（modified by calmwaves）",
